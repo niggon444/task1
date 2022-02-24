@@ -1,5 +1,5 @@
 import aiohttp_rpc
-import db
+from .db import *
 
 
 def create_rpc_server():
@@ -10,20 +10,20 @@ def create_rpc_server():
 
 
 async def get(uuid):
-    return await db.get_from_table(uuid)
+    return await get_from_table(uuid)
 
 
 async def add(label, data):
-    return await db.add_in_table(label, data)
+    return await add_in_table(label, data)
 
 
-async def list():
-    return await db.add_in_table(label, data)
+async def list(page, record_per_page=10):
+    return await list_from_table(page, record_per_page)
 
 
 async def update(uuid, data):
-    return await db.update_in_table(uuid, data)
+    return await update_in_table(uuid, data)
 
 
 async def delete(uuid):
-    return await db.delete_from_table(uuid)
+    return await delete_from_table(uuid)
