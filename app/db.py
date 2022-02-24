@@ -33,8 +33,8 @@ def table():
 
 
 async def get_from_table(uuid):
-    query = table.get().select().where(table.get().c.id == uuid)
-    async with db.get().transaction() as conn:
+    query = table().select().where(table.get().c.id == uuid)
+    async with db().transaction() as conn:
         return await conn.fetchrow(query)
 
 
@@ -45,14 +45,25 @@ async def list_from_table(page, record_per_page=10):
 
 
 async def delete_from_table(uuid):
-    query = table.get().delete().where(table.get().c.id == uuid)
-    async with db.get().transaction() as conn:
+    query = table().delete().where(table.get().c.id == uuid)
+    async with db().transaction() as conn:
         return await conn.fetch(query)
 
 
-async def update_in_table():
-    pass
+async def update_in_table(uuid, data):
+    #query1 = table.get().update(table.get().c.id == uuid_).values([{'data': data_, 'updated': func.NOW()}])
+    data = json.dumps(data)
+    async with db().acquire() as conn:
+        # return await conn.fetchrow(query1)
+        await conn.fetchrow("UPDATE task1 SET updated = NOW() , data = $1  WHERE task1.id = $2", data, uuid)
+        return await conn.fetchrow(table.get().select().where(table.get().c.id == uuid))
 
 
-async def add_in_table():
-    pass
+async def add_in_table(uuid, data):
+    # query = table.get().insert().values({'label': label_, 'data': data_}) #тут должно быть так но оно не работает ошибка AttributeError: 'Insert' object has no attribute 'parameters'
+    data = json.dumps(data)
+    async with db().transaction() as conn:
+        # return await conn.fetchrow(query)
+        await conn.fetchrow("INSERT INTO task1(label,data) VALUES($1,$2)", label, data)
+        result = await conn.fetchrow(table().select().order_by(table.get().c.created.desc()))
+        return str(result['id']).replace("UUID'", '').replace("'", '')
