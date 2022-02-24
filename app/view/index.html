@@ -89,7 +89,12 @@
   let par = {'page':page};
   ws_call_method('list',par);
   }
-
+  function begin_page(){
+    remember_list=message_id;
+    let par = {'page':0};
+    ws_call_method('list',par);
+  }
+  begin_page()
 </script>
 </body>
 </html>
