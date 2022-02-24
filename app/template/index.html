@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<button name="button" onclick="add()">ADD</button> label <input id="add_label" type="text" size="20"> data <input id="add_data" type="text" size="20">
+</br><button name="button" onclick="get()">GET</button> ID<input id="get_id" type="text" size="40"> <div id="get_res"></div>>
+</br><button name="button" onclick="delete_()">DELETE</button> ID<input id="delete_id" type="text" size="40">
+</br><button name="button" onclick="update()">UPDATE</button> ID<input id="update_id" type="text" size="20"> data <input id="update_data" type="text" size="20">
+</br><button name="button" onclick="next_page()">NEXT PAGE</button> <button onclick="prev_page()" name="button">PREVIOUS PAGE</button>
+<table id="table">
+</table>
+<script>
+  function show_list(array){
+    let tbl = document.getElementById('table')
+    tbl.innerHTML = ''
+    for (var y of array) {
+        const tr = tbl.insertRow();
+        const td = tr.insertCell();
+        td.appendChild(document.createTextNode(y.replace('<','')));
+        td.style.border = '1px solid black';
+    }
+  }
+  var ws = new WebSocket("ws://0.0.0.0:8080/rpc");
+  var message_id = 0;
+  var remember_get = -1,remember_list = -1;
+  var page = 0;
+  ws.onmessage = function(event) {
+      if(remember_get==JSON.parse(event.data)['id']){
+      if(!!JSON.parse(event.data)['result']){
+        document.getElementById('get_res').innerHTML=JSON.parse(event.data)['result'].replace('<','');
+      }else{
+      document.getElementById('get_res').innerHTML="";
+      }
+      }
+      if(remember_list==JSON.parse(event.data)['id']){
+      console.log(JSON.parse(event.data));
+      show_list(JSON.parse(event.data)['result']);
+      }
+      console.log(JSON.parse(event.data)['result']);
+  }
+  function ws_call_method(method, params) {
+    let request = {
+      jsonrpc: "2.0",
+      id: message_id,
+      method: method,
+      params: params
+    }
+
+    ws.send(JSON.stringify(request));
+    message_id++;
+  }
+  function add(){
+  let label = document.getElementById("add_label").value;
+  let data = document.getElementById("add_data").value;
+  console.log(data);
+  let par = {'label_':label,'data_':JSON.parse(data)};
+  ws_call_method('add',par);
+  }
+    function get(){
+    remember_get = message_id;
+  let id = document.getElementById("get_id").value;
+  let par = {'uuid_':id};
+  ws_call_method('get',par);
+  }
+  function delete_(){
+  let id = document.getElementById("delete_id").value;
+  let par = {'uuid_':id};
+  ws_call_method('delete',par);
+  }
+  function update(){
+      let id = document.getElementById("update_id").value;
+      let data = document.getElementById("update_data").value;
+      console.log(data);
+      let par = {'uuid_':id,'data_':JSON.parse(data)};
+      ws_call_method('update',par);
+  }
+  function next_page(){
+  page=page+1;
+  remember_list=message_id;
+  let par = {'page':page};
+  ws_call_method('list',par);
+  }
+  function prev_page(){
+  page=page-1;
+  remember_list=message_id;
+  let par = {'page':page};
+  ws_call_method('list',par);
+  }
+
+</script>
+</body>
+</html>
