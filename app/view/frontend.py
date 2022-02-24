@@ -9,4 +9,4 @@ def html_response(document):
 
 async def index_handler(request):
     """Response root requests"""
-    return html_response('template/index.html')
+    return html_response('app/view/index.html')

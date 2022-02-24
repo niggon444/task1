@@ -1,8 +1,9 @@
 import asyncpgsa
 from asyncpgsa.connection import get_dialect
 import json
+from sqlalchemy.sql import compiler
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, TEXT, JSONB
-from sqlalchemy import MetaData, Table, Column, func
+from sqlalchemy import MetaData, Table, Column, func, dialects
 from contextvars import ContextVar
 db_var = ContextVar('db')
 table_var = ContextVar('table')
@@ -43,7 +44,7 @@ async def get_from_table(uuid):
 async def list_from_table(page, record_per_page=10):
     table = table_var.get()
     db = db_var.get()
-    query = table.select().offset(page * record_per_page).limit((page + 1) * record_per_page)
+    query = table.select().offset(page * record_per_page).limit(record_per_page)
     async with db.transaction() as conn:
         return await conn.fetch(query)
 
@@ -59,7 +60,7 @@ async def delete_from_table(uuid):
 
 async def update_in_table(uuid, data):
     db = db_var.get()
-    #query1 = table.get().update(table.get().c.id == uuid_).values([{'data': data_, 'updated': func.NOW()}])
+    query = table.get().update(table.get().c.id == uuid_).values([{'data': data_, 'updated': func.NOW()}])
     data = json.dumps(data)
     table = table_var.get()
     async with db.acquire() as conn:
@@ -69,12 +70,14 @@ async def update_in_table(uuid, data):
 
 
 async def add_in_table(label, data):
-    # query = table.get().insert().values({'label': label_, 'data': data_}) #тут должно быть так но оно не работает ошибка AttributeError: 'Insert' object has no attribute 'parameters'
-    data = json.dumps(data)
     db = db_var.get()
     table = table_var.get()
+    query = table.insert(values=[{'label': label, 'data': data}])
+    query.parameters = {'label': label, 'data': data}
+    print(query)
+    query_string, params = asyncpgsa.compile_query(query)
+    print(params)
     async with db.transaction() as conn:
-        # return await conn.fetchrow(query)
-        await conn.fetchrow("INSERT INTO task1(label,data) VALUES($1,$2)", label, data)
+        await conn.fetchrow(query)
         result = await conn.fetchrow(table.select().order_by(table.c.created.desc()))
         return str(result['id']).replace("UUID'", '').replace("'", '')

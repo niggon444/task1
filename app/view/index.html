@@ -80,21 +80,21 @@
   function next_page(){
   page=page+1;
   remember_list=message_id;
-  let par = {'page':page};
+  let par = {'page':page,'record_per_page':10};
   ws_call_method('list',par);
   }
   function prev_page(){
   page=page-1;
+  page = Math.max(page,0)
   remember_list=message_id;
-  let par = {'page':page};
+  let par = {'page':page,'record_per_page':10};
   ws_call_method('list',par);
   }
-  function begin_page(){
+  ws.onopen = function(event){
     remember_list=message_id;
     let par = {'page':0};
     ws_call_method('list',par);
   }
-  begin_page()
 </script>
 </body>
 </html>
