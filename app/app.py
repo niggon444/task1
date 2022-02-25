@@ -3,6 +3,7 @@ from .view.frontend import index_handler
 from .rpc import create_rpc_server
 from .db import db_create
 
+
 async def create_app():
     """Run for create main app"""
     app = web.Application()
@@ -12,13 +13,5 @@ async def create_app():
         web.get('/', index_handler)
     ])
     app.on_shutdown.append(rpc_server.on_shutdown)
-    app.on_startup.append(on_start)
     await db_create()
     return app
-
-
-
-
-async def on_start(app):
-    """Run before app start"""
-    pass

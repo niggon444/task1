@@ -1,3 +1,4 @@
+# Example python rpc_client for work with app
 import aiohttp_rpc
 import asyncio
 

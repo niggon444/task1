@@ -5,23 +5,24 @@ from sqlalchemy.sql import compiler
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, TEXT, JSONB
 from sqlalchemy import MetaData, Table, Column, func, dialects
 from contextvars import ContextVar
-
+from . import settings
 db_var = ContextVar('db')
 table_var = ContextVar('table')
 
 
 async def db_create():
+    """Create db pool and Create Table for SQSAlchemy Core"""
     dialect = get_dialect(
         json_serializer=json.dumps,
         json_deserializer=json.loads
     )
     db_ = await asyncpgsa.create_pool(
-        host='127.0.0.1',
-        port=5432,
-        database='task1',
-        user='postgres',
+        host=settings.host_db,
+        port=settings.port_db,
+        database=settings.database_db,
+        user=settings.user_db,
         dialect=dialect,
-        password='1234'
+        password=settings.password_db
     )
     db_var.set(db_)
     metadata = MetaData()
@@ -76,8 +77,6 @@ async def add_in_table(label, data):
     table = table_var.get()
     query = table.insert(values=[{'label': label, 'data': data}])
     query.parameters = {'label': label, 'data': data}
-    query_string, params = asyncpgsa.compile_query(query)
-    print(params)
     async with db.transaction() as conn:
         await conn.fetchrow(query)
         result = await conn.fetchrow(table.select().order_by(table.c.created.desc()))
